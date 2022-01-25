@@ -5,18 +5,17 @@ import StarIcon from "@atlaskit/icon/glyph/star";
 import StarFilledIcon from "@atlaskit/icon/glyph/star-filled";
 import React, { Component } from "react";
 import type { Dispatch } from "redux";
+
+import { createFeedbackOpenEvent, sendAnalytics } from "../../analytics";
+import { Dialog } from "../../base/dialog";
+import { translate } from "../../base/i18n";
+import { connect } from "../../base/redux";
+import { cancelFeedback, submitFeedback } from "../actions";
 import {
     NOTIFICATION_TIMEOUT,
     showFeedbackErrorNotification,
     showNotification,
 } from "../../notifications";
-
-import { createFeedbackOpenEvent, sendAnalytics } from "../../analytics";
-import { Dialog } from "../../base/dialog";
-import { isMobileBrowser } from "../../base/environment/utils";
-import { translate } from "../../base/i18n";
-import { connect } from "../../base/redux";
-import { cancelFeedback, submitFeedback } from "../actions";
 
 declare var APP: Object;
 declare var interfaceConfig: Object;
@@ -28,6 +27,8 @@ const scoreAnimationClass = interfaceConfig.ENABLE_FEEDBACK_ANIMATION
 /**
  * The scores to display for selecting. The score is the index in the array and
  * the value of the index is a translation key used for display in the dialog.
+ *
+ * @types {string[]}
  */
 const SCORES = [
     "feedback.veryBad",
@@ -36,7 +37,6 @@ const SCORES = [
     "feedback.good",
     "feedback.veryGood",
 ];
-
 const SCORES2 = [
     "feedback.veryBad",
     "feedback.bad",
@@ -44,10 +44,6 @@ const SCORES2 = [
     "feedback.good",
     "feedback.veryGood",
 ];
-
-type Scrollable = {
-    scroll: Function,
-};
 
 /**
  * The type of the React {@code Component} props of {@link FeedbackDialog}.
@@ -60,13 +56,13 @@ type Props = {
     _message: string,
 
     /**
-     * The cached feedback score, if any, that was set when closing a previous
+     * The cached feedback Audio score, if any, that was set when closing a previous
      * instance of {@code FeedbackDialog}.
      */
     _score: number,
 
     /**
-     * The cached feedback score, if any, that was set when closing a previous
+     * The cached feedback Video score, if any, that was set when closing a previous
      * instance of {@code FeedbackDialog}.
      */
     _score2: number,
@@ -76,7 +72,7 @@ type Props = {
      * because feedback can occur after a conference has been left, so
      * references to it may no longer exist in redux.
      */
-    conference: Object,
+    //conference: Object,
 
     /**
      * Invoked to signal feedback submission or canceling.
@@ -116,11 +112,6 @@ type State = {
      * indexed so subtract one to map with SCORES.
      */
     score: number,
-
-    /**
-     * The currently selected score selection index. The score will not be 0
-     * indexed so subtract one to map with SCORES.
-     */
     score2: number,
 };
 
@@ -129,7 +120,7 @@ type State = {
  * conference quality, write a message describing the experience, and submit
  * the feedback.
  *
- * @augments Component
+ * @extends Component
  */
 class FeedbackDialog extends Component<Props, State> {
     /**
@@ -158,7 +149,6 @@ class FeedbackDialog extends Component<Props, State> {
              * @type {string}
              */
             message: _message,
-            error:'',
 
             /**
              * The score selection index which is currently being hovered. The
@@ -219,12 +209,6 @@ class FeedbackDialog extends Component<Props, State> {
         this._onScoreContainerMouseLeave2 =
             this._onScoreContainerMouseLeave2.bind(this);
         this._onSubmit = this._onSubmit.bind(this);
-
-        // On some mobile browsers opening Feedback dialog scrolls down the whole content because of the keyboard.
-        // By scrolling to the top we prevent hiding the feedback stars so the user knows those exist.
-        this._onScrollTop = (node: ?Scrollable) => {
-            node && node.scroll && node.scroll(0, 0);
-        };
     }
 
     /**
@@ -261,7 +245,6 @@ class FeedbackDialog extends Component<Props, State> {
             this.state;
         const scoreToDisplayAsSelected =
             mousedOverScore > -1 ? mousedOverScore : score;
-
         const scoreToDisplayAsSelected2 =
             mousedOverScore2 > -1 ? mousedOverScore2 : score2;
 
@@ -280,13 +263,9 @@ class FeedbackDialog extends Component<Props, State> {
                         key={index}
                         onClick={config._onClick}
                         onKeyPress={config._onKeyPres}
+                        onMouseOver={config._onMouseOver}
                         role="button"
                         tabIndex={0}
-                        {...(isMobileBrowser()
-                            ? {}
-                            : {
-                                  onMouseOver: config._onMouseOver,
-                              })}
                     >
                         {isFilled ? (
                             <StarFilledIcon label="star-filled" size="xlarge" />
@@ -297,7 +276,6 @@ class FeedbackDialog extends Component<Props, State> {
                 );
             }
         );
-
         const scoreIcons2 = this._scoreClickConfigurations2.map(
             (config, index) => {
                 const isFilled = index <= scoreToDisplayAsSelected2;
@@ -324,21 +302,17 @@ class FeedbackDialog extends Component<Props, State> {
                 );
             }
         );
+
         return (
             <Dialog
-                okDisabled={score2 == -1 || score == -1}
                 okKey="dialog.Submit"
                 onCancel={this._onCancel}
-                onDialogRef={this._onScrollTop}
                 onSubmit={this._onSubmit}
                 titleKey="feedback.rateExperience"
             >
                 <div className="feedback-dialog">
+                    <label className="Audio">Audio Quality*</label>
                     <div className="rating">
-                        <label style={{ fontSize: "15px" }}>
-                            {" "}
-                            Audio Quality*
-                        </label>
                         <div
                             aria-label={this.props.t("feedback.star")}
                             className="star-label"
@@ -354,17 +328,13 @@ class FeedbackDialog extends Component<Props, State> {
                             {scoreIcons}
                         </div>
                     </div>
-
+                    <label className="Video">Video Quality*</label>
                     <div className="rating">
-                        <label style={{ fontSize: "15px" }}>
-                            {" "}
-                            Video Quality*
-                        </label>
                         <div
                             aria-label={this.props.t("feedback.star")}
                             className="star-label"
                         >
-                            <p>{t(SCORES[scoreToDisplayAsSelected2])}</p>
+                            <p>{t(SCORES2[scoreToDisplayAsSelected2])}</p>
                         </div>
                         <div
                             className="stars"
@@ -373,7 +343,6 @@ class FeedbackDialog extends Component<Props, State> {
                             {scoreIcons2}
                         </div>
                     </div>
-
                     <div className="details">
                         <FieldTextAreaStateless
                             autoFocus={true}
@@ -382,11 +351,9 @@ class FeedbackDialog extends Component<Props, State> {
                             label={t("feedback.detailsLabel")}
                             onChange={this._onMessageChange}
                             shouldFitContainer={true}
-                            value={this.state.message}
+                            value={message}
                         />
                     </div>
-                         <span style={{color: "red"}}>{this.state.error}</span>
-                    
                 </div>
             </Dialog>
         );
@@ -425,18 +392,7 @@ class FeedbackDialog extends Component<Props, State> {
      * @returns {void}
      */
     _onMessageChange(event) {
-       
         this.setState({ message: event.target.value });
-        let error='';
-        let isValid= true;
-        if(!(isNaN(event.target.value)))
-        {
-           console.log("inside if ");
-           error='*Please enter valid input*';
-           isValid = false;
-        }
-        this.setState({error:error});
-        return isValid;
     }
 
     /**
@@ -449,7 +405,6 @@ class FeedbackDialog extends Component<Props, State> {
     _onScoreSelect(score) {
         this.setState({ score });
     }
-
     _onScoreSelect2(score2) {
         this.setState({ score2 });
     }
@@ -467,7 +422,6 @@ class FeedbackDialog extends Component<Props, State> {
     _onScoreContainerMouseLeave() {
         this.setState({ mousedOverScore: -1 });
     }
-
     _onScoreContainerMouseLeave2() {
         this.setState({ mousedOverScore2: -1 });
     }
@@ -483,7 +437,6 @@ class FeedbackDialog extends Component<Props, State> {
     _onScoreMouseOver(mousedOverScore) {
         this.setState({ mousedOverScore });
     }
-
     _onScoreMouseOver2(mousedOverScore2) {
         this.setState({ mousedOverScore2 });
     }
@@ -518,11 +471,10 @@ class FeedbackDialog extends Component<Props, State> {
                 ),
             (error) => {
                 dispatch(
-                   // showFeedbackErrorNotification(
-                       showNotification(
+                    showFeedbackErrorNotification(
                         {
-                            //  descriptionKey: "notify.feedBackTitle",
-                            titleKey: "notify.feedBackDescription",
+                            descriptionKey: "notify.feedBackTitle",
+                            titleKey: "notify.feedBackErrorTitle",
                         },
                         NOTIFICATION_TIMEOUT * 2
                     )
@@ -532,8 +484,6 @@ class FeedbackDialog extends Component<Props, State> {
 
         return true;
     }
-
-    _onScrollTop: (node: ?Scrollable) => void;
 }
 
 /**

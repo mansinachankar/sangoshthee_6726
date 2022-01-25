@@ -1,21 +1,22 @@
 // @flow
 
-import type { Dispatch } from 'redux';
-
-import { FEEDBACK_REQUEST_IN_PROGRESS } from '../../../modules/UI/UIErrors';
-import { openDialog } from '../base/dialog';
-import { extractFqnFromPath } from '../dynamic-branding';
-import { isVpaasMeeting } from '../jaas/functions';
+import type { Dispatch } from "redux";
+import axios from "axios";
+import { FEEDBACK_REQUEST_IN_PROGRESS } from "../../../modules/UI/UIErrors";
+import { openDialog } from "../base/dialog";
+import { extractFqnFromPath } from "../dynamic-branding";
+import { isVpaasMeeting } from "../jaas/functions";
 
 import {
     CANCEL_FEEDBACK,
     SUBMIT_FEEDBACK_ERROR,
-    SUBMIT_FEEDBACK_SUCCESS
-} from './actionTypes';
-import { FeedbackDialog } from './components';
-import { sendFeedbackToJaaSRequest } from './functions';
+    SUBMIT_FEEDBACK_SUCCESS,
+} from "./actionTypes";
+import { FeedbackDialog } from "./components";
+import { sendFeedbackToJaaSRequest } from "./functions";
 
 declare var config: Object;
+
 
 /**
  * Caches the passed in feedback in the redux store.
@@ -33,7 +34,7 @@ export function cancelFeedback(score: number, message: string) {
     return {
         type: CANCEL_FEEDBACK,
         message,
-        score
+        score,
     };
 }
 
@@ -51,37 +52,42 @@ export function cancelFeedback(score: number, message: string) {
 export function maybeOpenFeedbackDialog(conference: Object) {
     type R = {
         feedbackSubmitted: boolean,
-        showThankYou: boolean
+        showThankYou: boolean,
     };
 
     return (dispatch: Dispatch<any>, getState: Function): Promise<R> => {
         const state = getState();
-        const { feedbackPercentage = 100 } = state['features/base/config'];
+        const { feedbackPercentage = 100 } = state["features/base/config"];
 
         if (config.iAmRecorder) {
             // Intentionally fall through the if chain to prevent further action
             // from being taken with regards to showing feedback.
-        } else if (state['features/base/dialog'].component === FeedbackDialog) {
+        } else if (state["features/base/dialog"].component === FeedbackDialog) {
             // Feedback is currently being displayed.
 
             return Promise.reject(FEEDBACK_REQUEST_IN_PROGRESS);
-        } else if (state['features/feedback'].submitted) {
+        } else if (state["features/feedback"].submitted) {
             // Feedback has been submitted already.
 
             return Promise.resolve({
                 feedbackSubmitted: true,
-                showThankYou: true
+                showThankYou: true,
             });
-        } else if (conference.isCallstatsEnabled() && feedbackPercentage > Math.random() * 100) {
-            return new Promise(resolve => {
-                dispatch(openFeedbackDialog(conference, () => {
-                    const { submitted } = getState()['features/feedback'];
+        } else if (
+            conference.isCallstatsEnabled() &&
+            feedbackPercentage > Math.random() * 100
+        ) {
+            return new Promise((resolve) => {
+                dispatch(
+                    openFeedbackDialog(conference, () => {
+                        const { submitted } = getState()["features/feedback"];
 
-                    resolve({
-                        feedbackSubmitted: submitted,
-                        showThankYou: false
-                    });
-                }));
+                        resolve({
+                            feedbackSubmitted: submitted,
+                            showThankYou: false,
+                        });
+                    })
+                );
             });
         }
 
@@ -90,7 +96,7 @@ export function maybeOpenFeedbackDialog(conference: Object) {
         // act on it.
         return Promise.resolve({
             feedbackSubmitted: false,
-            showThankYou: true
+            showThankYou: true,
         });
     };
 }
@@ -108,7 +114,7 @@ export function maybeOpenFeedbackDialog(conference: Object) {
 export function openFeedbackDialog(conference: Object, onClose: ?Function) {
     return openDialog(FeedbackDialog, {
         conference,
-        onClose
+        onClose,
     });
 }
 
@@ -123,28 +129,28 @@ export function openFeedbackDialog(conference: Object, onClose: ?Function) {
 export function sendJaasFeedbackMetadata(conference: Object, feedback: Object) {
     return (dispatch: Dispatch<any>, getState: Function): Promise<any> => {
         const state = getState();
-        const { jaasFeedbackMetadataURL } = state['features/base/config'];
+        const { jaasFeedbackMetadataURL } = state["features/base/config"];
 
-        const { jwt, user, tenant } = state['features/base/jwt'];
+        const { jwt, user, tenant } = state["features/base/jwt"];
 
         if (!isVpaasMeeting(state) || !jaasFeedbackMetadataURL) {
             return Promise.resolve();
         }
 
         const meetingFqn = extractFqnFromPath();
-        const feedbackData = {
+         feedbackData = {
             ...feedback,
             sessionId: conference.sessionId,
             userId: user.id,
             meetingFqn,
             jwt,
-            tenant
+            tenant, 
         };
 
         return sendFeedbackToJaaSRequest(jaasFeedbackMetadataURL, feedbackData);
     };
 }
-
+ 
 /**
  * Send the passed in feedback.
  *
@@ -156,7 +162,7 @@ export function sendJaasFeedbackMetadata(conference: Object, feedback: Object) {
  * feedback is being left.
  * @returns {Function}
  */
-export function submitFeedback(
+/*export function submitFeedback(
         score: number,
         message: string,
         conference: Object) {
@@ -172,5 +178,37 @@ export function submitFeedback(
             });
 
             return Promise.reject(error);
-        }));
+        }));*/
+
+export function submitFeedback(score, score2, message) {
+    var username = "Anonymous User";
+    var splitURL = window.location.href.split("/");
+    var meetingName = splitURL[3];
+   
+    // var score2 = 3;
+
+    //  const { jwt, user, tenant } = state["features/base/jwt"];
+    //console.log(feedbackData.userId);
+
+    var url = "https://jarvis1.cdac.in/feedbackApi/";
+
+    if (!url) {
+        return undefined;
+    }
+    return axios
+        .post(url, {
+            user_name: username,
+            ratings: score,
+            video_ratings: score2,
+            message: message,
+            conference_name: meetingName,
+        })
+        .then((response) => {
+            if ((response.data.status = "1")) {
+                console.log(response.data.msg);
+            }
+        })
+        .catch((err) => {
+            console.log(err);
+        });
 }

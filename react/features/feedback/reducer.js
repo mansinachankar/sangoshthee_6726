@@ -14,6 +14,7 @@ const DEFAULT_STATE = {
     // The sentinel value -1 is used to denote no rating has been set and to
     // preserve pre-redux behavior.
     score: -1,
+    score2: -1,
     submitted: false
 };
 
@@ -28,7 +29,8 @@ ReducerRegistry.register(
             return {
                 ...state,
                 message: action.message,
-                score: action.score
+                score: action.score,
+                score2:action.score2,
             };
         }
 
@@ -38,6 +40,7 @@ ReducerRegistry.register(
                 ...state,
                 message: '',
                 score: -1,
+                score2:-1,
                 submitted: true
             };
         }

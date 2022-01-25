@@ -84,6 +84,15 @@ export function hideRaiseHandNotifications() {
     };
 }
 
+export function showFeedbackErrorNotification(props: Object) {
+    return showNotification({
+        ...props,
+        appearance: NOTIFICATION_TYPE.FEEDBACKERROR,
+    });
+}
+
+
+
 /**
  * Stops notifications from being displayed.
  *

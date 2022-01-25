@@ -1,20 +1,18 @@
 // @flow
 
-import Flag from '@atlaskit/flag';
-import EditorErrorIcon from '@atlaskit/icon/glyph/editor/error';
-import EditorInfoIcon from '@atlaskit/icon/glyph/editor/info';
-import EditorSuccessIcon from '@atlaskit/icon/glyph/editor/success';
-import EditorWarningIcon from '@atlaskit/icon/glyph/editor/warning';
-import QuestionsIcon from '@atlaskit/icon/glyph/questions';
-import React from 'react';
+import Flag from "@atlaskit/flag";
+import EditorErrorIcon from "@atlaskit/icon/glyph/editor/error";
+import EditorInfoIcon from "@atlaskit/icon/glyph/editor/info";
+import EditorSuccessIcon from "@atlaskit/icon/glyph/editor/success";
+import EditorWarningIcon from "@atlaskit/icon/glyph/editor/warning";
+import QuestionsIcon from "@atlaskit/icon/glyph/questions";
+import React from "react";
 
-import { translate } from '../../../base/i18n';
-import Message from '../../../base/react/components/web/Message';
-import { colors } from '../../../base/ui/Tokens';
-import { NOTIFICATION_ICON, NOTIFICATION_TYPE } from '../../constants';
-import AbstractNotification, {
-    type Props
-} from '../AbstractNotification';
+import { translate } from "../../../base/i18n";
+import Message from "../../../base/react/components/web/Message";
+import { colors } from "../../../base/ui/Tokens";
+import { NOTIFICATION_ICON, NOTIFICATION_TYPE } from "../../constants";
+import AbstractNotification, { type Props } from "../AbstractNotification";
 
 declare var interfaceConfig: Object;
 
@@ -26,7 +24,7 @@ declare var interfaceConfig: Object;
 const ICON_COLOR = {
     error: colors.error06,
     normal: colors.primary06,
-    warning: colors.warning05
+    warning: colors.warning05,
 };
 
 /**
@@ -48,17 +46,18 @@ class Notification extends AbstractNotification<Props> {
             title,
             titleArguments,
             titleKey,
-            uid
+            uid,
         } = this.props;
 
         return (
             <Flag
-                actions = { this._mapAppearanceToButtons(hideErrorSupportLink) }
-                description = { this._renderDescription() }
-                icon = { this._mapAppearanceToIcon() }
-                id = { uid }
-                testId = { titleKey }
-                title = { title || t(titleKey, titleArguments) } />
+                actions={this._mapAppearanceToButtons(hideErrorSupportLink)}
+                description={this._renderDescription()}
+                icon={this._mapAppearanceToIcon()}
+                id={uid}
+                testId={titleKey}
+                title={title || t(titleKey, titleArguments)}
+            />
         );
     }
 
@@ -76,12 +75,12 @@ class Notification extends AbstractNotification<Props> {
      * @returns {ReactElement}
      */
     _renderDescription() {
-        const description = this._getDescription().join(' ');
+        const description = this._getDescription().join(" ");
 
         // the id is used for testing the UI
         return (
-            <p data-testid = { this._getDescriptionKey() } >
-                <Message text = { description } />
+            <p data-testid={this._getDescriptionKey()}>
+                <Message text={description} />
             </p>
         );
     }
@@ -93,7 +92,7 @@ class Notification extends AbstractNotification<Props> {
      * @private
      */
     _onOpenSupportLink() {
-        window.open(interfaceConfig.SUPPORT_URL, '_blank', 'noopener');
+        window.open(interfaceConfig.SUPPORT_URL, "_blank", "noopener");
     }
 
     /**
@@ -107,46 +106,66 @@ class Notification extends AbstractNotification<Props> {
      */
     _mapAppearanceToButtons(hideErrorSupportLink) {
         switch (this.props.appearance) {
-        case NOTIFICATION_TYPE.ERROR: {
-            const buttons = [
-                {
-                    content: this.props.t('dialog.dismiss'),
-                    onClick: this._onDismissed
-                }
-            ];
+            case NOTIFICATION_TYPE.FEEDBACKERROR: {
+                const buttons = [
+                    {
+                        content: this.props.t("dialog.dismiss"),
+                        onClick: this._onDismissed,
+                    },
+                ];
 
-            if (!hideErrorSupportLink && interfaceConfig.SUPPORT_URL) {
-                buttons.push({
-                    content: this.props.t('dialog.contactSupport'),
-                    onClick: this._onOpenSupportLink
-                });
+                return buttons;
             }
 
-            return buttons;
-        }
-        case NOTIFICATION_TYPE.WARNING:
-            return [
-                {
-                    content: this.props.t('dialog.Ok'),
-                    onClick: this._onDismissed
-                }
-            ];
+            case NOTIFICATION_TYPE.ERROR: {
+                const buttons = [
+                    {
+                        content: this.props.t("dialog.dismiss"),
+                        onClick: this._onDismissed,
+                    },
+                ];
 
-        default:
-            if (this.props.customActionNameKey?.length && this.props.customActionHandler?.length) {
-                return this.props.customActionNameKey.map((customAction: string, customActionIndex: number) => {
-                    return {
-                        content: this.props.t(customAction),
-                        onClick: () => {
-                            if (this.props.customActionHandler[customActionIndex]()) {
-                                this._onDismissed();
-                            }
+                if (!hideErrorSupportLink && interfaceConfig.SUPPORT_URL) {
+                    buttons.push({
+                        content: this.props.t("dialog.contactSupport"),
+                        onClick: this._onOpenSupportLink,
+                    });
+                }
+
+                return buttons;
+            }
+            case NOTIFICATION_TYPE.WARNING:
+                return [
+                    {
+                        content: this.props.t("dialog.Ok"),
+                        onClick: this._onDismissed,
+                    },
+                ];
+
+            default:
+                if (
+                    this.props.customActionNameKey?.length &&
+                    this.props.customActionHandler?.length
+                ) {
+                    return this.props.customActionNameKey.map(
+                        (customAction: string, customActionIndex: number) => {
+                            return {
+                                content: this.props.t(customAction),
+                                onClick: () => {
+                                    if (
+                                        this.props.customActionHandler[
+                                            customActionIndex
+                                        ]()
+                                    ) {
+                                        this._onDismissed();
+                                    }
+                                },
+                            };
                         }
-                    };
-                });
-            }
+                    );
+                }
 
-            return [];
+                return [];
         }
     }
 
@@ -159,21 +178,24 @@ class Notification extends AbstractNotification<Props> {
         let Icon;
 
         switch (this.props.icon || this.props.appearance) {
-        case NOTIFICATION_ICON.ERROR:
-            Icon = EditorErrorIcon;
-            break;
-        case NOTIFICATION_ICON.WARNING:
-            Icon = EditorWarningIcon;
-            break;
-        case NOTIFICATION_ICON.SUCCESS:
-            Icon = EditorSuccessIcon;
-            break;
-        case NOTIFICATION_ICON.MESSAGE:
-            Icon = QuestionsIcon;
-            break;
-        default:
-            Icon = EditorInfoIcon;
-            break;
+            case NOTIFICATION_ICON.ERROR:
+                Icon = EditorErrorIcon;
+                break;
+            case NOTIFICATION_ICON.FEEDBACKERROR:
+                Icon = EditorErrorIcon;
+                break;
+            case NOTIFICATION_ICON.WARNING:
+                Icon = EditorWarningIcon;
+                break;
+            case NOTIFICATION_ICON.SUCCESS:
+                Icon = EditorSuccessIcon;
+                break;
+            case NOTIFICATION_ICON.MESSAGE:
+                Icon = QuestionsIcon;
+                break;
+            default:
+                Icon = EditorInfoIcon;
+                break;
         }
 
         return Icon;
@@ -189,16 +211,19 @@ class Notification extends AbstractNotification<Props> {
     _mapAppearanceToIcon() {
         const { appearance, icon } = this.props;
         const secIconColor = ICON_COLOR[appearance];
-        const iconSize = 'medium';
+        const iconSize = "medium";
         const Icon = this._getIcon();
 
-        return (<div className = { icon }>
-            <div className = { `ribbon ${appearance}` } />
-            <Icon
-                label = { appearance }
-                secondaryColor = { secIconColor }
-                size = { iconSize } />
-        </div>);
+        return (
+            <div className={icon}>
+                <div className={`ribbon ${appearance}`} />
+                <Icon
+                    label={appearance}
+                    secondaryColor={secIconColor}
+                    size={iconSize}
+                />
+            </div>
+        );
     }
 }
 

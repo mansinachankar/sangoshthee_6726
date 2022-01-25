@@ -27,6 +27,7 @@ export const NOTIFICATION_TIMEOUT_TYPE = {
  */
 export const NOTIFICATION_TYPE = {
     ERROR: 'error',
+    FEEDBACKERROR: 'error',
     INFO: 'info',
     NORMAL: 'normal',
     SUCCESS: 'success',
@@ -40,6 +41,7 @@ export const NOTIFICATION_TYPE = {
  */
 export const NOTIFICATION_TYPE_PRIORITIES = {
     [NOTIFICATION_TYPE.ERROR]: 5,
+    [NOTIFICATION_TYPE.FEEDBACKERROR]:5,
     [NOTIFICATION_TYPE.INFO]: 3,
     [NOTIFICATION_TYPE.NORMAL]: 3,
     [NOTIFICATION_TYPE.SUCCESS]: 3,
